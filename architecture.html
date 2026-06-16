@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DevAnswers – Architecture Diagram</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.25rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      margin-bottom: 2.5rem;
+    }
+    .diagram-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 1100px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    }
+    .diagram-card .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+    .legend {
+      margin-top: 2.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+    .dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>DevAnswers</h1>
+  <p class="subtitle">Full-Stack Q&amp;A Platform — Application Architecture</p>
+
+  <div class="diagram-card">
+    <div class="mermaid">
+graph TB
+    subgraph CLIENT["🌐  Browser  ·  Port 5173"]
+        direction TB
+        subgraph REACT["React 19 SPA  (Vite)"]
+            ROUTER["React Router v7\nRoute definitions in App.jsx"]
+            subgraph PAGES["Pages"]
+                P1["Home\n(question list)"]
+                P2["Question Detail\n(answers + summarize)"]
+                P3["Post Question\n(AI improve)"]
+                P4["Auth\n(Login / Register)"]
+                P5["Profile · Tags"]
+            end
+            subgraph REDUX["Redux Toolkit Store"]
+                S1["userSlice\n(auth state + JWT)"]
+                S2["questionSlice\n(list + currentQuestion)"]
+                S3["themeSlice\n(dark / light)"]
+            end
+            subgraph SERVICES["Frontend Services"]
+                AX["axiosInstance\nlocalhost:5000/api"]
+                GS["geminiService\ngoogle AI REST"]
+            end
+        end
+    end
+
+    subgraph SERVER["⚙️  Express Server  ·  Port 5000"]
+        direction TB
+        APP["app.js\nHelmet · CORS · Rate-limit"]
+        subgraph ROUTES["Routes  /api/*"]
+            R1["/auth"]
+            R2["/questions"]
+            R3["/answers"]
+            R4["/tags"]
+        end
+        subgraph CTRL["Controllers"]
+            C1["authController"]
+            C2["questionController"]
+            C3["answerController"]
+            C4["tagController"]
+        end
+        subgraph SVC["Services"]
+            SV1["userService"]
+            SV2["questionService"]
+            SV3["answerService"]
+            SV4["voteService"]
+            SV5["tagService"]
+        end
+        MW["Middleware\nauthHandler · errorHandler"]
+        subgraph MODELS["Mongoose Models"]
+            M1["User"]
+            M2["Question"]
+            M3["Answer"]
+            M4["Tag"]
+        end
+    end
+
+    subgraph EXTERNAL["☁️  External Services"]
+        DB[("MongoDB Atlas\ndevanswers cluster")]
+        AI["Google Gemini API\ngemini-3.5-flash"]
+    end
+
+    ROUTER --> PAGES
+    PAGES --> REDUX
+    REDUX --> AX
+    AX -- "REST + JWT Bearer" --> APP
+    PAGES -- "AI features\n(improve / summarize)" --> GS
+    GS -- "x-goog-api-key\nHTTPS POST" --> AI
+    APP --> MW
+    MW --> ROUTES
+    R1 --> C1 --> SV1 --> M1
+    R2 --> C2 --> SV2 --> M2
+    R3 --> C3 --> SV3 --> M3
+    R4 --> C4 --> SV5 --> M4
+    SV2 --> SV4
+    SV3 --> SV4
+    M1 & M2 & M3 & M4 -- "Mongoose ODM" --> DB
+
+    style CLIENT fill:#1e293b,stroke:#667eea,stroke-width:2px,color:#e2e8f0
+    style SERVER fill:#1e293b,stroke:#22d3ee,stroke-width:2px,color:#e2e8f0
+    style EXTERNAL fill:#1e293b,stroke:#f59e0b,stroke-width:2px,color:#e2e8f0
+    style REACT fill:#0f172a,stroke:#667eea,stroke-width:1px,color:#e2e8f0
+    style PAGES fill:#0f172a,stroke:#475569,stroke-width:1px,color:#cbd5e1
+    style REDUX fill:#0f172a,stroke:#475569,stroke-width:1px,color:#cbd5e1
+    style SERVICES fill:#0f172a,stroke:#475569,stroke-width:1px,color:#cbd5e1
+    style ROUTES fill:#0f172a,stroke:#475569,stroke-width:1px,color:#cbd5e1
+    style CTRL fill:#0f172a,stroke:#475569,stroke-width:1px,color:#cbd5e1
+    style SVC fill:#0f172a,stroke:#475569,stroke-width:1px,color:#cbd5e1
+    style MODELS fill:#0f172a,stroke:#475569,stroke-width:1px,color:#cbd5e1
+    style DB fill:#292524,stroke:#f59e0b,stroke-width:2px,color:#fde68a
+    style AI fill:#14532d,stroke:#22c55e,stroke-width:2px,color:#bbf7d0
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:#667eea"></div> React Frontend (Vite)</div>
+    <div class="legend-item"><div class="dot" style="background:#22d3ee"></div> Express Backend</div>
+    <div class="legend-item"><div class="dot" style="background:#f59e0b"></div> MongoDB Atlas</div>
+    <div class="legend-item"><div class="dot" style="background:#22c55e"></div> Gemini AI API</div>
+    <div class="legend-item"><div class="dot" style="background:#94a3b8"></div> JWT Auth flow</div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#1e40af',
+        primaryTextColor: '#e2e8f0',
+        primaryBorderColor: '#667eea',
+        lineColor: '#94a3b8',
+        secondaryColor: '#0f172a',
+        tertiaryColor: '#1e293b',
+        background: '#0f172a',
+        mainBkg: '#1e293b',
+        nodeBorder: '#667eea',
+        clusterBkg: '#0f172a',
+        titleColor: '#e2e8f0',
+        edgeLabelBackground: '#1e293b',
+        fontFamily: 'Segoe UI, system-ui, sans-serif',
+      }
+    });
+  </script>
+</body>
+</html>
